@@ -212,8 +212,18 @@ body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--txt1);
 </div>
 
 <div class="toast" id="toast"></div>
+<!-- Firebase (backend de sincronización en la nube). Vacío = modo local. -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 const PASSWORD='lms2026';
+
+/* ╔═══ PEGA AQUÍ TU CONFIG DE FIREBASE (ver GUIA_Overlap.md). Vacío = modo local sin sync. ═══╗ */
+const FIREBASE_CONFIG={apiKey:"AIzaSyBWp22XaCZELxM1mWIz_aA18UPMJ7IuuY0",authDomain:"gantt-skandia.firebaseapp.com",projectId:"gantt-skandia",storageBucket:"gantt-skandia.firebasestorage.app",messagingSenderId:"534588224781",appId:"1:534588224781:web:846839dc4ca4e00014ac44"};
+const BOARD_ID="overlap-comercial"; // documento del tablero en la nube (mismo id en todos los dispositivos)
+let CLOUD=false,db=null,boardRef=null,applyingRemote=false,saveTimer=null;
+function cloudConfigured(){return !!(FIREBASE_CONFIG&&FIREBASE_CONFIG.projectId&&FIREBASE_CONFIG.apiKey&&typeof firebase!=="undefined");}
 const MONTHS=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 const SEED_LMS=[
@@ -324,9 +334,42 @@ async function loadAll(){
   try{const r=localStorage.getItem('lms2_propuestas');propList=r?JSON.parse(r):[...SEED_PROP];}catch{propList=[...SEED_PROP];}
   try{const r=localStorage.getItem('lms2_config');cfg=r?JSON.parse(r):{...SEED_CFG};}catch{cfg={...SEED_CFG};}
 }
-async function persistLMS(){sync(true);try{localStorage.setItem('lms2_prospectos',JSON.stringify(lmsList));}finally{sync(false);}}
-async function persistProp(){sync(true);try{localStorage.setItem('lms2_propuestas',JSON.stringify(propList));}finally{sync(false);}}
-async function persistCfg(){sync(true);try{localStorage.setItem('lms2_config',JSON.stringify(cfg));}finally{sync(false);}}
+async function persistLMS(){sync(true);try{localStorage.setItem('lms2_prospectos',JSON.stringify(lmsList));pushCloud();}finally{sync(false);}}
+async function persistProp(){sync(true);try{localStorage.setItem('lms2_propuestas',JSON.stringify(propList));pushCloud();}finally{sync(false);}}
+async function persistCfg(){sync(true);try{localStorage.setItem('lms2_config',JSON.stringify(cfg));pushCloud();}finally{sync(false);}}
+
+/* ===== Backend en la nube (Firebase Firestore) — misma arquitectura del Gantt SkandIA ===== */
+function cloudPayload(){return {lmsList,propList,cfg,updated:Date.now()};}
+function saveLocalAll(){try{localStorage.setItem('lms2_prospectos',JSON.stringify(lmsList));localStorage.setItem('lms2_propuestas',JSON.stringify(propList));localStorage.setItem('lms2_config',JSON.stringify(cfg));}catch(e){}}
+function setCloudStatus(txt){const l=document.getElementById('syncLbl');if(l)l.textContent=txt;}
+function pushCloud(){
+  if(!(CLOUD&&boardRef)||applyingRemote)return;
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{boardRef.set(cloudPayload()).then(()=>setCloudStatus('Sincronizado en la nube ✓ '+new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}))).catch(()=>setCloudStatus('Sin conexión — guardado local'));},500);
+}
+function startCloud(){
+  if(!cloudConfigured()){setCloudStatus('Modo local (sin sync)');return;}
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.firestore();
+    try{firebase.auth().signInAnonymously().catch(()=>{});}catch(e){}
+    boardRef=db.collection('boards').doc(BOARD_ID);
+    setCloudStatus('Conectando…');
+    boardRef.get().then(snap=>{
+      if(snap.exists){const d=snap.data()||{};if(Array.isArray(d.lmsList))lmsList=d.lmsList;if(Array.isArray(d.propList))propList=d.propList;if(d.cfg)cfg=d.cfg;}
+      else{boardRef.set(cloudPayload()).catch(()=>{});}
+      CLOUD=true;saveLocalAll();refreshDatalist();renderTab();setCloudStatus('Sincronizado en la nube ✓');
+      boardRef.onSnapshot(s=>{
+        if(!s.exists)return;const d=s.data();if(!d)return;
+        if(JSON.stringify([d.lmsList,d.propList,d.cfg])===JSON.stringify([lmsList,propList,cfg]))return;
+        applyingRemote=true;
+        if(Array.isArray(d.lmsList))lmsList=d.lmsList;if(Array.isArray(d.propList))propList=d.propList;if(d.cfg)cfg=d.cfg;
+        saveLocalAll();refreshDatalist();renderTab();
+        applyingRemote=false;setCloudStatus('Sincronizado en la nube ✓');
+      },()=>setCloudStatus('Sin conexión — guardado local'));
+    }).catch(()=>{CLOUD=false;setCloudStatus('Sin conexión — guardado local');});
+  }catch(e){CLOUD=false;setCloudStatus('Modo local (sin sync)');}
+}
 
 function sync(on){
   const d=document.getElementById('syncDot'),l=document.getElementById('syncLbl');
@@ -339,7 +382,7 @@ function doLogin(){
   if(document.getElementById('pwIn').value===PASSWORD){
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('appRoot').style.display='block';
-    loadAll().then(()=>{refreshDatalist();renderTab();});
+    loadAll().then(()=>{refreshDatalist();renderTab();startCloud();});
   }else{document.getElementById('loginErr').style.display='block';document.getElementById('pwIn').value='';}
 }
 document.getElementById('pwIn').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
