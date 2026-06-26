@@ -64,6 +64,12 @@ body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--txt1);
 .p-rechazada{background:#FAE0DC;color:var(--c-rechazada);}
 .p-pendiente{background:#EDE9FE;color:var(--c-pendiente);}
 .p-visitada{background:#DCFAE9;color:var(--c-visitada);}
+.p-presentada{background:#DBEAFE;color:#1D4ED8;}
+.prob-badge{display:inline-flex;align-items:center;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;border:1.5px solid;}
+.prob-high{background:#DCFCE7;color:#166534;border-color:#86EFAC;}
+.prob-mid{background:#FEF9C3;color:#854D0E;border-color:#FDE047;}
+.prob-low{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5;}
+.prob-none{background:#F1F5F9;color:#94A3B8;border-color:#CBD5E1;}
 .p-co{background:#FDECD2;color:#92400E;}
 .p-pe{background:#DCFCE7;color:#166534;}
 .p-gt{background:#EDE9FE;color:#5B21B6;}
@@ -141,6 +147,7 @@ body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--txt1);
     <div class="login-logo">L</div>
     <div class="login-ttl">Tablero Comercial</div>
     <div class="login-sub">Capital LMS &middot; Lina Santana &middot; 2026</div>
+    <div id="loginHint" style="font-size:11px;color:#5B8DB8;margin-bottom:8px;display:none;">Modo solo lectura disponible</div>
     <input class="login-in" type="password" id="pwIn" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;" maxlength="30"/>
     <button class="login-btn" onclick="doLogin()">Entrar</button>
     <div class="login-err" id="loginErr">Contrasena incorrecta</div>
@@ -158,7 +165,8 @@ body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--txt1);
       <span class="sync-dot" id="syncDot"></span>
       <span class="sync-lbl" id="syncLbl">Guardado</span>
       <button class="btn-icon" onclick="exportCSV()">Exportar</button>
-      <button class="btn-primary" onclick="openModal('propuesta')">+ Nueva propuesta</button>
+      <span id="robadge" style="display:none;background:#1E2D3D;border:1px solid #5B8DB8;color:#5B8DB8;font-size:11px;font-weight:600;padding:5px 10px;border-radius:6px;letter-spacing:.5px;">SOLO LECTURA</span>
+      <button id="btnNewProp" class="btn-primary" onclick="openModal('propuesta')">+ Nueva propuesta</button>
     </div>
   </div>
   <div class="nav-tabs">
@@ -166,7 +174,7 @@ body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--txt1);
     <button class="nav-tab" onclick="setTab('forecast',this)">Forecast</button>
     <button class="nav-tab" onclick="setTab('pipeline',this)">Pipeline LMS</button>
     <button class="nav-tab" onclick="setTab('cuentas',this)">Cuentas</button>
-    <button class="nav-tab" onclick="setTab('config',this)">Configuracion</button>
+    <button class="nav-tab" id="tabConfig" onclick="setTab('config',this)">Configuracion</button>
   </div>
   <div class="main" id="mainContent"></div>
 </div>
@@ -176,7 +184,7 @@ body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--txt1);
     <div class="modal-hd"><div class="modal-ttl" id="mPropTtl">Nueva Propuesta</div><button class="modal-x" onclick="closeModal('ovProp')">x</button></div>
     <div class="modal-bd">
       <div class="fg">
-        <div class="fg-group"><label class="flbl">Estado</label><select class="fctl" id="fpStatus"><option>En proceso</option><option>Propuesta</option><option>Agendada</option><option>Rechazada</option><option>Pendiente</option></select></div>
+        <div class="fg-group"><label class="flbl">Estado</label><select class="fctl" id="fpStatus"><option>En proceso</option><option>Presentada</option><option>Propuesta</option><option>Agendada</option><option>Rechazada</option><option>Pendiente</option></select></div>
         <div class="fg-group"><label class="flbl">Ano</label><select class="fctl" id="fpAno"><option>2026</option><option>2025</option></select></div>
         <div class="fg-group"><label class="flbl">Sede</label><select class="fctl" id="fpSede"><option>Colombia</option><option>Peru</option><option>Guatemala</option></select></div>
         <div class="fg-group"><label class="flbl">Mes Presentacion</label><select class="fctl" id="fpMesPres"><option value="">-</option><option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option><option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option><option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option><option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option></select></div>
@@ -185,6 +193,7 @@ body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--txt1);
         <div class="fg-group full"><label class="flbl">Cliente</label><input class="fctl" type="text" id="fpCliente" placeholder="Nombre de la empresa" list="dlClientes"/><datalist id="dlClientes"></datalist></div>
         <div class="fg-group full"><label class="flbl">Descripcion</label><input class="fctl" type="text" id="fpDesc" placeholder="Descripcion de la propuesta"/></div>
         <div class="fg-group"><label class="flbl">Valor Propuesta COP</label><input class="fctl" type="number" id="fpValor" placeholder="0" step="1000000"/></div>
+        <div class="fg-group"><label class="flbl">Probabilidad de Cierre</label><select class="fctl" id="fpProb"><option value="">Sin definir</option><option value="10">10% — Muy baja</option><option value="20">20% — Baja</option><option value="30">30% — Baja-media</option><option value="40">40% — Media</option><option value="50">50% — Media</option><option value="60">60% — Media-alta</option><option value="70">70% — Alta</option><option value="80">80% — Alta</option><option value="90">90% — Muy alta</option><option value="95">95% — Casi segura</option></select></div>
         <div class="fg-group"><label class="flbl">Responsable</label><select class="fctl" id="fpResp"><option>Lina Santana</option><option>Gerente negocios Colombia</option><option>Country Manager Colombia</option></select></div>
         <div class="fg-group full"><label class="flbl">Notas</label><input class="fctl" type="text" id="fpNotas" placeholder="Observaciones"/></div>
       </div>
@@ -212,18 +221,10 @@ body{font-family:'Inter',sans-serif;background:var(--surface);color:var(--txt1);
 </div>
 
 <div class="toast" id="toast"></div>
-<!-- Firebase (backend de sincronización en la nube). Vacío = modo local. -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
 const PASSWORD='lms2026';
-
-/* ╔═══ PEGA AQUÍ TU CONFIG DE FIREBASE (ver GUIA_Overlap.md). Vacío = modo local sin sync. ═══╗ */
-const FIREBASE_CONFIG={apiKey:"AIzaSyBWp22XaCZELxM1mWIz_aA18UPMJ7IuuY0",authDomain:"gantt-skandia.firebaseapp.com",projectId:"gantt-skandia",storageBucket:"gantt-skandia.firebasestorage.app",messagingSenderId:"534588224781",appId:"1:534588224781:web:846839dc4ca4e00014ac44"};
-const BOARD_ID="overlap-comercial"; // documento del tablero en la nube (mismo id en todos los dispositivos)
-let CLOUD=false,db=null,boardRef=null,applyingRemote=false,saveTimer=null;
-function cloudConfigured(){return !!(FIREBASE_CONFIG&&FIREBASE_CONFIG.projectId&&FIREBASE_CONFIG.apiKey&&typeof firebase!=="undefined");}
+const PASSWORD_VIEW='lmsview2026';
+let readOnly=false;
 const MONTHS=['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 const SEED_LMS=[
@@ -292,20 +293,20 @@ const SEED_LMS=[
 ];
 
 const SEED_PROP=[
-{id:'p1',status:'En proceso',ano:2026,mesPres:5,mesVenta:6,sede:'Colombia',cliente:'Caja de Compensacion Familiar Compensar',desc:'Universidad corporativa Fase diseno',tipo:'Consultoria de Gestion del talento',valor:82000000,resp:'Lina Santana',notas:''},
-{id:'p2',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Grupo Familia',desc:'Experiencias de aprendizaje - Trade Marketing',tipo:'Formacion',valor:null,resp:'Lina Santana',notas:''},
-{id:'p3',status:'En proceso',ano:2026,mesPres:5,mesVenta:6,sede:'Colombia',cliente:'Seguros Bolivar',desc:'Experiencias de aprendizaje - Liderazgo',tipo:'Formacion',valor:121768000,resp:'Lina Santana',notas:''},
-{id:'p4',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Offcorss',desc:'Modelo comercial - gestion indicadores en tienda',tipo:'Consultoria de Negocio',valor:null,resp:'Lina Santana',notas:''},
-{id:'p5',status:'Rechazada',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Agricola Los Pinos',desc:'Coaching equipo Comercial',tipo:'Consultoria de Negocio',valor:20200000,resp:'Lina Santana',notas:''},
-{id:'p6',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Banco Popular',desc:'Invitacion a cotizar BANPOPSTARS',tipo:'Formacion',valor:82016000,resp:'Lina Santana',notas:''},
-{id:'p7',status:'En proceso',ano:2026,mesPres:5,mesVenta:6,sede:'Colombia',cliente:'Grupo Familia',desc:'Modelo de Gestion de Cambio - Recovery',tipo:'Consultoria de Gestion del talento',valor:250000000,resp:'Lina Santana',notas:''},
-{id:'p8',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Colgas',desc:'Closius - entrenamiento fuerza comercial',tipo:'Consultoria de Negocio',valor:null,resp:'Lina Santana',notas:''},
-{id:'p9',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Ocensa',desc:'Alternativas de Formacion disruptivas',tipo:'Formacion',valor:null,resp:'Lina Santana',notas:''},
-{id:'p10',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'AUTECO',desc:'',tipo:'Consultoria de Negocio',valor:202000000,resp:'Lina Santana',notas:''},
-{id:'p11',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'Keralty',desc:'Catalogo experiencias de Aprendizaje',tipo:'Consultoria de Gestion del talento',valor:null,resp:'Lina Santana',notas:''},
-{id:'p12',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'Essity',desc:'Catalogo experiencias de Aprendizaje',tipo:'Consultoria de Gestion del talento',valor:null,resp:'Lina Santana',notas:''},
-{id:'p13',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'Rio Paila',desc:'Entrenamiento para lideres',tipo:'Formacion',valor:null,resp:'Lina Santana',notas:''},
-{id:'p14',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'Mabe',desc:'Entrenamiento para lideres: modelo de competencias',tipo:'Formacion',valor:null,resp:'Lina Santana',notas:''},
+{id:'p1',status:'En proceso',ano:2026,mesPres:5,mesVenta:6,sede:'Colombia',cliente:'Caja de Compensacion Familiar Compensar',desc:'Universidad corporativa Fase diseno',tipo:'Consultoria de Gestion del talento',valor:82000000,resp:'Lina Santana',notas:'',prob:null},
+{id:'p2',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Grupo Familia',desc:'Experiencias de aprendizaje - Trade Marketing',tipo:'Formacion',valor:null,resp:'Lina Santana',notas:'',prob:null},
+{id:'p3',status:'En proceso',ano:2026,mesPres:5,mesVenta:6,sede:'Colombia',cliente:'Seguros Bolivar',desc:'Experiencias de aprendizaje - Liderazgo',tipo:'Formacion',valor:121768000,resp:'Lina Santana',notas:'',prob:null},
+{id:'p4',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Offcorss',desc:'Modelo comercial - gestion indicadores en tienda',tipo:'Consultoria de Negocio',valor:null,resp:'Lina Santana',notas:'',prob:null},
+{id:'p5',status:'Rechazada',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Agricola Los Pinos',desc:'Coaching equipo Comercial',tipo:'Consultoria de Negocio',valor:20200000,resp:'Lina Santana',notas:'',prob:null},
+{id:'p6',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Banco Popular',desc:'Invitacion a cotizar BANPOPSTARS',tipo:'Formacion',valor:82016000,resp:'Lina Santana',notas:'',prob:null},
+{id:'p7',status:'En proceso',ano:2026,mesPres:5,mesVenta:6,sede:'Colombia',cliente:'Grupo Familia',desc:'Modelo de Gestion de Cambio - Recovery',tipo:'Consultoria de Gestion del talento',valor:250000000,resp:'Lina Santana',notas:'',prob:null},
+{id:'p8',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Colgas',desc:'Closius - entrenamiento fuerza comercial',tipo:'Consultoria de Negocio',valor:null,resp:'Lina Santana',notas:'',prob:null},
+{id:'p9',status:'En proceso',ano:2026,mesPres:6,mesVenta:6,sede:'Colombia',cliente:'Ocensa',desc:'Alternativas de Formacion disruptivas',tipo:'Formacion',valor:null,resp:'Lina Santana',notas:'',prob:null},
+{id:'p10',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'AUTECO',desc:'',tipo:'Consultoria de Negocio',valor:202000000,resp:'Lina Santana',notas:'',prob:null},
+{id:'p11',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'Keralty',desc:'Catalogo experiencias de Aprendizaje',tipo:'Consultoria de Gestion del talento',valor:null,resp:'Lina Santana',notas:'',prob:null},
+{id:'p12',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'Essity',desc:'Catalogo experiencias de Aprendizaje',tipo:'Consultoria de Gestion del talento',valor:null,resp:'Lina Santana',notas:'',prob:null},
+{id:'p13',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'Rio Paila',desc:'Entrenamiento para lideres',tipo:'Formacion',valor:null,resp:'Lina Santana',notas:'',prob:null},
+{id:'p14',status:'En proceso',ano:2026,mesPres:null,mesVenta:6,sede:'Colombia',cliente:'Mabe',desc:'Entrenamiento para lideres: modelo de competencias',tipo:'Formacion',valor:null,resp:'Lina Santana',notas:'',prob:null},
 ];
 
 const OBJ_ACTIVOS=[
@@ -334,42 +335,9 @@ async function loadAll(){
   try{const r=localStorage.getItem('lms2_propuestas');propList=r?JSON.parse(r):[...SEED_PROP];}catch{propList=[...SEED_PROP];}
   try{const r=localStorage.getItem('lms2_config');cfg=r?JSON.parse(r):{...SEED_CFG};}catch{cfg={...SEED_CFG};}
 }
-async function persistLMS(){sync(true);try{localStorage.setItem('lms2_prospectos',JSON.stringify(lmsList));pushCloud();}finally{sync(false);}}
-async function persistProp(){sync(true);try{localStorage.setItem('lms2_propuestas',JSON.stringify(propList));pushCloud();}finally{sync(false);}}
-async function persistCfg(){sync(true);try{localStorage.setItem('lms2_config',JSON.stringify(cfg));pushCloud();}finally{sync(false);}}
-
-/* ===== Backend en la nube (Firebase Firestore) — misma arquitectura del Gantt SkandIA ===== */
-function cloudPayload(){return {lmsList,propList,cfg,updated:Date.now()};}
-function saveLocalAll(){try{localStorage.setItem('lms2_prospectos',JSON.stringify(lmsList));localStorage.setItem('lms2_propuestas',JSON.stringify(propList));localStorage.setItem('lms2_config',JSON.stringify(cfg));}catch(e){}}
-function setCloudStatus(txt){const l=document.getElementById('syncLbl');if(l)l.textContent=txt;}
-function pushCloud(){
-  if(!(CLOUD&&boardRef)||applyingRemote)return;
-  clearTimeout(saveTimer);
-  saveTimer=setTimeout(()=>{boardRef.set(cloudPayload()).then(()=>setCloudStatus('Sincronizado en la nube ✓ '+new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'}))).catch(()=>setCloudStatus('Sin conexión — guardado local'));},500);
-}
-function startCloud(){
-  if(!cloudConfigured()){setCloudStatus('Modo local (sin sync)');return;}
-  try{
-    firebase.initializeApp(FIREBASE_CONFIG);
-    db=firebase.firestore();
-    try{firebase.auth().signInAnonymously().catch(()=>{});}catch(e){}
-    boardRef=db.collection('boards').doc(BOARD_ID);
-    setCloudStatus('Conectando…');
-    boardRef.get().then(snap=>{
-      if(snap.exists){const d=snap.data()||{};if(Array.isArray(d.lmsList))lmsList=d.lmsList;if(Array.isArray(d.propList))propList=d.propList;if(d.cfg)cfg=d.cfg;}
-      else{boardRef.set(cloudPayload()).catch(()=>{});}
-      CLOUD=true;saveLocalAll();refreshDatalist();renderTab();setCloudStatus('Sincronizado en la nube ✓');
-      boardRef.onSnapshot(s=>{
-        if(!s.exists)return;const d=s.data();if(!d)return;
-        if(JSON.stringify([d.lmsList,d.propList,d.cfg])===JSON.stringify([lmsList,propList,cfg]))return;
-        applyingRemote=true;
-        if(Array.isArray(d.lmsList))lmsList=d.lmsList;if(Array.isArray(d.propList))propList=d.propList;if(d.cfg)cfg=d.cfg;
-        saveLocalAll();refreshDatalist();renderTab();
-        applyingRemote=false;setCloudStatus('Sincronizado en la nube ✓');
-      },()=>setCloudStatus('Sin conexión — guardado local'));
-    }).catch(()=>{CLOUD=false;setCloudStatus('Sin conexión — guardado local');});
-  }catch(e){CLOUD=false;setCloudStatus('Modo local (sin sync)');}
-}
+async function persistLMS(){sync(true);try{localStorage.setItem('lms2_prospectos',JSON.stringify(lmsList));}finally{sync(false);}}
+async function persistProp(){sync(true);try{localStorage.setItem('lms2_propuestas',JSON.stringify(propList));}finally{sync(false);}}
+async function persistCfg(){sync(true);try{localStorage.setItem('lms2_config',JSON.stringify(cfg));}finally{sync(false);}}
 
 function sync(on){
   const d=document.getElementById('syncDot'),l=document.getElementById('syncLbl');
@@ -379,11 +347,17 @@ function sync(on){
 }
 
 function doLogin(){
-  if(document.getElementById('pwIn').value===PASSWORD){
+  const v=document.getElementById('pwIn').value;
+  if(v===PASSWORD||v===PASSWORD_VIEW){
+    readOnly=(v===PASSWORD_VIEW);
     document.getElementById('loginScreen').style.display='none';
     document.getElementById('appRoot').style.display='block';
-    loadAll().then(()=>{refreshDatalist();renderTab();startCloud();});
-  }else{document.getElementById('loginErr').style.display='block';document.getElementById('pwIn').value='';}
+    loadAll().then(()=>{refreshDatalist();applyReadOnly();renderTab();});
+  }else{
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('loginHint').style.display='block';
+    document.getElementById('pwIn').value='';
+  }
 }
 document.getElementById('pwIn').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
@@ -393,7 +367,7 @@ function pct(a,b){return b>0?Math.round(a/b*100):0;}
 function barColor(p){return p>=80?'#22C55E':p>=50?'#C8973A':'#C84B3A';}
 
 function statusPill(s){
-  const m={'en proceso':'p-proceso','En proceso':'p-proceso','propuesta':'p-propuesta','Propuesta':'p-propuesta','agendada':'p-agendada','Agendada':'p-agendada','rechazada':'p-rechazada','Rechazada':'p-rechazada','pendiente agendar':'p-pendiente','pendiente':'p-pendiente','Pendiente':'p-pendiente','visitada':'p-visitada','correo':'p-agendada'};
+  const m={'en proceso':'p-proceso','En proceso':'p-proceso','propuesta':'p-propuesta','Propuesta':'p-propuesta','agendada':'p-agendada','Agendada':'p-agendada','rechazada':'p-rechazada','Rechazada':'p-rechazada','pendiente agendar':'p-pendiente','pendiente':'p-pendiente','Pendiente':'p-pendiente','visitada':'p-visitada','correo':'p-agendada','Presentada':'p-presentada','presentada':'p-presentada'};
   const cls=m[s]||'p-agendada';
   const lbl=s?s.charAt(0).toUpperCase()+s.slice(1):'-';
   return `<span class="pill ${cls}">${lbl}</span>`;
@@ -424,6 +398,7 @@ function renderDashboard(){
   const pctLina=pct(resTotal,cfg.objetivoAnualLina);
   const funnelData=[
     {label:'En proceso',count:propList.filter(p=>p.status==='En proceso').length,color:'var(--c-proceso)'},
+    {label:'Presentada',count:propList.filter(p=>p.status==='Presentada').length,color:'#1D4ED8'},
     {label:'Propuesta',count:propList.filter(p=>p.status==='Propuesta').length,color:'var(--c-propuesta)'},
     {label:'Agendada',count:propList.filter(p=>p.status==='Agendada').length,color:'var(--c-agendada)'},
     {label:'Rechazada',count:propList.filter(p=>p.status==='Rechazada').length,color:'var(--c-rechazada)'},
@@ -469,8 +444,9 @@ function renderForecast(){
   });
   const totalPipe=filt.filter(p=>p.status!=='Rechazada').reduce((s,p)=>s+(p.valor||0),0);
   const sinValor=filt.filter(p=>p.status!=='Rechazada'&&!p.valor).length;
+  const weighted=filt.filter(p=>p.status!=='Rechazada'&&p.valor&&p.prob).reduce((s,p)=>s+(p.valor*(parseInt(p.prob)/100)),0);
   const rows=filt.length?filt.map(p=>`
-    <tr class="clk" onclick="editProp('${p.id}')">
+    <tr class="${readOnly?'':'clk'}" ${readOnly?'':'onclick="editProp(\''+p.id+'\')"'}>
       <td>${statusPill(p.status)}</td>
       <td style="color:var(--muted);font-size:12px;">${p.mesPres?MONTHS[p.mesPres]:'-'}</td>
       <td style="color:var(--muted);font-size:12px;">${p.mesVenta?MONTHS[p.mesVenta]:'-'}</td>
@@ -478,12 +454,13 @@ function renderForecast(){
       <td style="font-size:12px;color:var(--txt2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.desc||'-'}</td>
       <td style="font-size:12px;color:var(--txt2);">${p.tipo}</td>
       <td class="valor-cell">${fmt(p.valor)}</td>
-      <td><button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;" onclick="event.stopPropagation();deleteProp('${p.id}')">x</button></td>
+      <td onclick="event.stopPropagation();">${probBadge(p.prob)}</td>
+      <td>${readOnly?'':'<button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;" onclick="event.stopPropagation();deleteProp(\''+p.id+'\')" >x</button>'}</td>
     </tr>`).join(''):`<tr><td colspan="8" class="empty-state">Sin propuestas</td></tr>`;
   return `
   <div class="sec-head">
-    <div><div class="sec-title">Forecast de Propuestas</div><div class="sec-sub">Pipeline activo: ${fmt(totalPipe)} &middot; ${sinValor} sin valor asignado</div></div>
-    <button class="btn-primary" onclick="openModal('propuesta')">+ Nueva propuesta</button>
+    <div><div class="sec-title">Forecast de Propuestas</div><div class="sec-sub">Pipeline activo: ${fmt(totalPipe)} &middot; Forecast ponderado: <strong>${weighted>0?fmt(weighted):'—'}</strong> &middot; ${sinValor} sin valor</div></div>
+    ${readOnly?'':'<button class="btn-primary" onclick="openModal(\'propuesta\')">+ Nueva propuesta</button>'}
   </div>
   <div class="panel">
     <div class="filters">
@@ -493,10 +470,11 @@ function renderForecast(){
         <option value="En proceso" ${fFilt.status==='En proceso'?'selected':''}>En proceso</option>
         <option value="Propuesta" ${fFilt.status==='Propuesta'?'selected':''}>Propuesta</option>
         <option value="Agendada" ${fFilt.status==='Agendada'?'selected':''}>Agendada</option>
+        <option value="Presentada" ${fFilt.status==='Presentada'?'selected':''}>Presentada</option>
         <option value="Rechazada" ${fFilt.status==='Rechazada'?'selected':''}>Rechazada</option>
       </select>
     </div>
-    <table class="dt"><thead><tr><th>Estado</th><th>Pres.</th><th>Venta</th><th>Cliente</th><th>Descripcion</th><th>Solucion</th><th>Valor</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <table class="dt"><thead><tr><th>Estado</th><th>Pres.</th><th>Venta</th><th>Cliente</th><th>Descripcion</th><th>Solucion</th><th>Valor</th><th>Prob. Cierre</th><th></th></tr></thead><tbody>${rows}</tbody></table>
   </div>`;
 }
 
@@ -509,7 +487,7 @@ function renderPipeline(){
     return true;
   });
   const rows=filt.length?filt.map(l=>`
-    <tr class="clk" onclick="editLMS('${l.id}')">
+    <tr class="${readOnly?'':'clk'}" ${readOnly?'':'onclick="editLMS(\''+l.id+'\')"'}>
       <td style="font-weight:600;">${l.empresa}</td>
       <td style="font-size:12px;color:var(--txt2);">${l.cargo||'-'}</td>
       <td style="font-size:12px;">${l.contacto||'-'}</td>
@@ -517,12 +495,12 @@ function renderPipeline(){
       <td><span class="pill ${l.pais==='Guatemala'?'p-gt':l.pais==='Peru'?'p-pe':'p-co'}">${l.pais}</span></td>
       <td>${l.estado?statusPill(l.estado):'<span style="color:var(--muted);font-size:12px;">-</span>'}</td>
       <td style="font-size:11px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.obs||''}</td>
-      <td><button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;" onclick="event.stopPropagation();deleteLMS('${l.id}')">x</button></td>
+      <td>${readOnly?'':'<button style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;" onclick="event.stopPropagation();deleteLMS(\''+l.id+'\')" >x</button>'}</td>
     </tr>`).join(''):`<tr><td colspan="8" class="empty-state">Sin prospectos</td></tr>`;
   return `
   <div class="sec-head">
     <div><div class="sec-title">Pipeline LMS - Prospectos</div><div class="sec-sub">${lmsList.length} empresas &middot; ${lmsList.filter(l=>l.estado&&l.estado!=='').length} con gestion activa</div></div>
-    <button class="btn-primary" onclick="openModal('lms')">+ Nuevo prospecto</button>
+    ${readOnly?'':'<button class="btn-primary" onclick="openModal(\'lms\')">+ Nuevo prospecto</button>'}
   </div>
   <div class="kpi-grid" style="margin-bottom:16px;">
     <div class="kpi-card teal"><div class="kpi-label">En proceso</div><div class="kpi-value">${lmsList.filter(l=>l.estado==='en proceso').length}</div></div>
@@ -590,11 +568,12 @@ async function saveCfg(key,inId,valId,isMoney){
 }
 
 function openModal(type,id){
+  if(readOnly)return;
   if(type==='propuesta'){
     editPropId=id||null;
     document.getElementById('mPropTtl').textContent=id?'Editar Propuesta':'Nueva Propuesta';
-    if(id){const p=propList.find(x=>x.id===id);document.getElementById('fpStatus').value=p.status;document.getElementById('fpAno').value=p.ano;document.getElementById('fpSede').value=p.sede;document.getElementById('fpMesPres').value=p.mesPres||'';document.getElementById('fpMesVenta').value=p.mesVenta||'';document.getElementById('fpCliente').value=p.cliente;document.getElementById('fpDesc').value=p.desc||'';document.getElementById('fpTipo').value=p.tipo;document.getElementById('fpValor').value=p.valor||'';document.getElementById('fpResp').value=p.resp;document.getElementById('fpNotas').value=p.notas||'';}
-    else{['fpDesc','fpCliente','fpValor','fpNotas'].forEach(i=>document.getElementById(i).value='');document.getElementById('fpStatus').selectedIndex=0;document.getElementById('fpMesPres').value='';document.getElementById('fpMesVenta').value='';}
+    if(id){const p=propList.find(x=>x.id===id);document.getElementById('fpStatus').value=p.status;document.getElementById('fpAno').value=p.ano;document.getElementById('fpSede').value=p.sede;document.getElementById('fpMesPres').value=p.mesPres||'';document.getElementById('fpMesVenta').value=p.mesVenta||'';document.getElementById('fpCliente').value=p.cliente;document.getElementById('fpDesc').value=p.desc||'';document.getElementById('fpTipo').value=p.tipo;document.getElementById('fpValor').value=p.valor||'';document.getElementById('fpResp').value=p.resp;document.getElementById('fpNotas').value=p.notas||'';document.getElementById('fpProb').value=p.prob||'';}
+    else{['fpDesc','fpCliente','fpValor','fpNotas','fpProb'].forEach(i=>document.getElementById(i).value='');document.getElementById('fpStatus').selectedIndex=0;document.getElementById('fpMesPres').value='';document.getElementById('fpMesVenta').value='';}
     document.getElementById('ovProp').classList.add('open');
   }else{
     editLMSId=id||null;
@@ -613,7 +592,7 @@ function editLMS(id){openModal('lms',id);}
 async function savePropuesta(){
   const cliente=document.getElementById('fpCliente').value.trim();
   if(!cliente){showToast('Ingresa el cliente');return;}
-  const p={id:editPropId||'p'+Date.now(),status:document.getElementById('fpStatus').value,ano:parseInt(document.getElementById('fpAno').value),mesPres:parseInt(document.getElementById('fpMesPres').value)||null,mesVenta:parseInt(document.getElementById('fpMesVenta').value)||null,sede:document.getElementById('fpSede').value,cliente,desc:document.getElementById('fpDesc').value.trim(),tipo:document.getElementById('fpTipo').value,valor:parseFloat(document.getElementById('fpValor').value)||null,resp:document.getElementById('fpResp').value,notas:document.getElementById('fpNotas').value.trim()};
+  const p={id:editPropId||'p'+Date.now(),status:document.getElementById('fpStatus').value,ano:parseInt(document.getElementById('fpAno').value),mesPres:parseInt(document.getElementById('fpMesPres').value)||null,mesVenta:parseInt(document.getElementById('fpMesVenta').value)||null,sede:document.getElementById('fpSede').value,cliente,desc:document.getElementById('fpDesc').value.trim(),tipo:document.getElementById('fpTipo').value,valor:parseFloat(document.getElementById('fpValor').value)||null,prob:document.getElementById('fpProb').value||null,resp:document.getElementById('fpResp').value,notas:document.getElementById('fpNotas').value.trim()};
   if(editPropId){const i=propList.findIndex(x=>x.id===editPropId);if(i>=0)propList[i]=p;}else propList.push(p);
   await persistProp();refreshDatalist();closeModal('ovProp');renderTab();showToast(editPropId?'Propuesta actualizada':'Propuesta guardada');editPropId=null;
 }
@@ -639,6 +618,21 @@ async function resetAll(){
   if(!confirm('Restaurar datos originales del Excel?'))return;
   lmsList=[...SEED_LMS];propList=[...SEED_PROP];cfg={...SEED_CFG};
   await persistLMS();await persistProp();await persistCfg();refreshDatalist();renderTab();showToast('Datos restaurados');
+}
+function probBadge(p){
+  if(p==null||p==='')return '<span class="prob-badge prob-none">sin prob.</span>';
+  const n=parseInt(p);
+  const cls=n>=70?'prob-high':n>=40?'prob-mid':'prob-low';
+  return '<span class="prob-badge '+cls+'">' + n + '%</span>';
+}
+function applyReadOnly(){
+  if(!readOnly)return;
+  const btn=document.getElementById('btnNewProp');
+  if(btn)btn.style.display='none';
+  const rb=document.getElementById('robage');
+  if(rb)rb.style.display='inline-block';
+  const tc=document.getElementById('tabConfig');
+  if(tc)tc.style.display='none';
 }
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 </script>
